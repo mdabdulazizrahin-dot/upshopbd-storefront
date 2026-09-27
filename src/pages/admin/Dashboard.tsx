@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import AdminLayout from '@/components/admin/AdminLayout';
+import { useSiteSettingsContext } from '@/contexts/SiteSettingsContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShoppingCart, Package, Users, TrendingUp, DollarSign, Clock } from 'lucide-react';
 
@@ -11,6 +12,8 @@ const extractArray = (res: any): any[] => {
 };
 
 const Dashboard = () => {
+  const { settings } = useSiteSettingsContext();
+  const siteName = settings?.general?.siteName || 'UpShop BD';
   const { data: orders = [] } = useQuery({
     queryKey: ['admin-all-orders'],
     queryFn: async () => {
@@ -61,7 +64,7 @@ const Dashboard = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back to MyHaat BD Admin</p>
+          <p className="text-muted-foreground">Welcome back to {siteName} Admin</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {statCards.map((stat, index) => (

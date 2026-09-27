@@ -42,7 +42,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const siteName = settings?.general?.siteName || 'MyHaat BD';
+  const siteName = settings?.general?.siteName || 'UpShop BD';
 
   const allNavItems = useMemo(() => [
     { icon: LayoutDashboard, label: tAdmin.dashboard, path: '/admin', permission: 'dashboard' },

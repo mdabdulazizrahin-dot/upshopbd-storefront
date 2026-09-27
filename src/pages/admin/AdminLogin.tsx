@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSiteSettingsContext } from '@/contexts/SiteSettingsContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,9 +11,12 @@ import { Shield, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const { settings } = useSiteSettingsContext();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
+
+  const siteName = settings?.general?.siteName || 'UpShop BD';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +43,7 @@ const AdminLogin = () => {
               <Shield className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">অ্যাডমিন লগইন</h1>
-            <p className="text-muted-foreground mt-2">MyHaat BD অ্যাডমিন প্যানেলে প্রবেশ করুন</p>
+            <p className="text-muted-foreground mt-2">{siteName} অ্যাডমিন প্যানেলে প্রবেশ করুন</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">

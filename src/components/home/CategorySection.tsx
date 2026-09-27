@@ -55,20 +55,20 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
   const displayName = category.name || category.name_bn || 'Category';
 
   return (
-    <div className="flex-shrink-0 w-[118px] sm:w-[126px] md:w-[130px] lg:w-[136px] xl:w-[146px] h-[138px] sm:h-[148px] md:h-[155px] xl:h-[162px]">
+    <div className="flex-shrink-0 w-[calc((100%-18px)/4)] min-w-[72px] sm:min-w-0 sm:w-[126px] md:w-[130px] lg:w-[136px] xl:w-[146px] h-[106px] sm:h-[148px] md:h-[155px] xl:h-[162px] snap-start">
       <Link
         to={`/shop?category=${category.slug}`}
-        className="group/card relative flex flex-col items-center justify-between p-2.5 sm:p-3 md:p-3.5 bg-white dark:bg-card border border-gray-200/90 dark:border-gray-800 rounded-2xl transition-all duration-300 hover:shadow-[0_12px_24px_-6px_rgba(0,0,0,0.08)] hover:-translate-y-1.5 hover:border-primary/60 active:scale-[0.98] w-full h-full shadow-[0_2px_6px_rgba(0,0,0,0.02)] overflow-hidden cursor-pointer select-none"
+        className="group/card relative flex flex-col items-center justify-between p-1.5 sm:p-3 md:p-3.5 bg-white dark:bg-card border border-gray-200/90 dark:border-gray-800 rounded-xl sm:rounded-2xl transition-all duration-300 hover:shadow-[0_12px_24px_-6px_rgba(0,0,0,0.08)] hover:-translate-y-1.5 hover:border-primary/60 active:scale-[0.98] w-full h-full shadow-[0_2px_6px_rgba(0,0,0,0.02)] overflow-hidden cursor-pointer select-none"
       >
         {/* Subtle hover gradient wash */}
         <div className="absolute inset-0 bg-gradient-to-t from-primary/[0.04] to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
         {/* Isolated Product Image */}
-        <div className="flex-1 w-full flex items-center justify-center p-1 overflow-hidden">
+        <div className="flex-1 w-full flex items-center justify-center p-0.5 sm:p-1 overflow-hidden">
           <img
             src={imageUrl}
             alt={displayName}
-            className="max-h-16 md:max-h-20 w-auto max-w-full object-contain drop-shadow-sm group-hover/card:scale-110 group-hover/card:rotate-1 transition-transform duration-300 ease-out"
+            className="max-h-12 sm:max-h-16 md:max-h-20 w-auto max-w-full object-contain drop-shadow-sm group-hover/card:scale-110 group-hover/card:rotate-1 transition-transform duration-300 ease-out"
             loading="lazy"
             draggable={false}
             onError={(e) => {
@@ -82,8 +82,8 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
         </div>
 
         {/* Category Label */}
-        <div className="w-full text-center mt-1 pt-1 z-10">
-          <span className="block font-bold text-xs sm:text-sm text-gray-900 dark:text-gray-100 group-hover/card:text-primary transition-colors tracking-tight truncate">
+        <div className="w-full text-center mt-0.5 sm:mt-1 pt-0.5 sm:pt-1 z-10 px-0.5">
+          <span className="block font-bold text-[11px] sm:text-xs md:text-sm text-gray-900 dark:text-gray-100 group-hover/card:text-primary transition-colors tracking-tight truncate leading-tight">
             {displayName}
           </span>
         </div>
@@ -149,8 +149,8 @@ const CategorySection = ({
       const maxScroll = el.scrollWidth - el.clientWidth;
       if (maxScroll <= 10) return;
 
-      // Slide distance matches ~2-3 cards or ~300px
-      const slideDistance = Math.min(el.clientWidth * 0.65, 360);
+      // Slide distance: on mobile (<640px) slide exactly 4 cards (full container width), on desktop ~360px
+      const slideDistance = el.clientWidth < 640 ? el.clientWidth : Math.min(el.clientWidth * 0.65, 360);
 
       if (el.scrollLeft >= maxScroll - 20) {
         // Reached the end! Smoothly slide back to beginning
@@ -165,7 +165,7 @@ const CategorySection = ({
   const slidePrev = useCallback(() => {
     if (scrollContainerRef.current) {
       const el = scrollContainerRef.current;
-      const slideDistance = Math.min(el.clientWidth * 0.65, 360);
+      const slideDistance = el.clientWidth < 640 ? el.clientWidth : Math.min(el.clientWidth * 0.65, 360);
       el.scrollBy({ left: -slideDistance, behavior: 'smooth' });
     }
   }, []);
@@ -245,13 +245,13 @@ const CategorySection = ({
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Soft edge gradient fades */}
-        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 sm:w-10 bg-gradient-to-r from-background via-background/60 to-transparent z-10" />
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 sm:w-10 bg-gradient-to-l from-background via-background/60 to-transparent z-10" />
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-2 sm:w-10 bg-gradient-to-r from-background via-background/60 to-transparent z-10" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-2 sm:w-10 bg-gradient-to-l from-background via-background/60 to-transparent z-10" />
 
-        {/* Scroll Track: displays all 8 categories simultaneously on desktop */}
+        {/* Scroll Track: displays 4 categories on mobile and all 8 on desktop */}
         <div 
           ref={scrollContainerRef}
-          className="flex gap-2 sm:gap-2.5 md:gap-3 lg:gap-3 xl:gap-3.5 overflow-x-auto scrollbar-none py-3 px-1 select-none justify-start lg:justify-between items-center"
+          className="flex gap-1.5 sm:gap-2.5 md:gap-3 lg:gap-3 xl:gap-3.5 overflow-x-auto scrollbar-none py-2 sm:py-3 px-0.5 sm:px-1 select-none justify-start lg:justify-between items-center snap-x snap-mandatory"
         >
           {topCategories.map((category, idx) => (
             <CategoryCard 

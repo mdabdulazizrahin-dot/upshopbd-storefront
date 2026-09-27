@@ -78,13 +78,20 @@ const VisualSearchModal: React.FC<VisualSearchModalProps> = ({ open, onOpenChang
       const formData = new FormData();
       formData.append('image', file);
 
-      // Using raw axios/fetch or api helper
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://127.0.0.1:8000/api/search-by-image', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      const response = await fetch(`${apiUrl}/search-by-image`, {
         method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: {
+          'Accept': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: formData,
       });
+
+      if (!response.ok) {
+        throw new Error(`Search request failed with status ${response.status}`);
+      }
 
       const data = await response.json();
       if (data.success && Array.isArray(data.results)) {

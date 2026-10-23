@@ -95,6 +95,17 @@ export interface TrackingSettings {
   customBodyScripts?: string;
 }
 
+export interface HelplineSettings {
+  enabled?: boolean;
+  whatsapp_number?: string;
+  whatsapp_message?: string;
+  messenger_username?: string;
+  phone_number?: string;
+  position?: 'bottom-right' | 'bottom-left';
+  show_on_mobile?: boolean;
+  show_on_desktop?: boolean;
+}
+
 export interface SiteSettings {
   general?: GeneralSettings;
   colors?: ColorSettings;
@@ -104,6 +115,7 @@ export interface SiteSettings {
   social?: SocialSettings;
   sections?: SectionSettings;
   tracking?: TrackingSettings;
+  helpline?: HelplineSettings;
 }
 
 export const defaultSettings: SiteSettings = {
@@ -122,6 +134,16 @@ export const defaultSettings: SiteSettings = {
   social: {},
   sections: {},
   tracking: {},
+  helpline: {
+    enabled: true,
+    whatsapp_number: '',
+    whatsapp_message: 'আসসালামু আলাইকুম, আমি UpShop BD থেকে কেনাকাটা করতে সাহায্য চাই।',
+    messenger_username: '',
+    phone_number: '',
+    position: 'bottom-right',
+    show_on_mobile: true,
+    show_on_desktop: true,
+  },
 };
 
 export const useSiteSettings = () => {

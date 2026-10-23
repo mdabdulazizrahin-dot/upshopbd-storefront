@@ -44,6 +44,7 @@ import GoogleSheetsSync from "./pages/admin/GoogleSheetsSync";
 import Customers from "./pages/admin/Customers";
 import Staff from "./pages/admin/Staff";
 import MobileBottomNav from "./components/layout/MobileBottomNav";
+import FloatingHelpline from "./components/common/FloatingHelpline";
 import ScrollToTop from "./components/ScrollToTop";
 const queryClient = new QueryClient();
 
@@ -115,7 +116,8 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 <MobileBottomNav />
-                <div className="pb-14 lg:pb-0" />
+                <FloatingHelpline />
+                <div className="pb-16 lg:pb-0" />
               </CartProvider>
             </LanguageProvider>
           </SiteSettingsProvider>

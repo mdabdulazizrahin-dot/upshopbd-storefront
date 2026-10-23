@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSiteSettings, useUpdateSiteSettings, TypographySettings, ColorSettings, HeaderSettings, FooterSettings, FooterColumn, FooterLink, GeneralSettings, SocialSettings, SectionSettings, TrackingSettings } from '@/hooks/useSiteSettings';
+import { useSiteSettings, useUpdateSiteSettings, TypographySettings, ColorSettings, HeaderSettings, FooterSettings, FooterColumn, FooterLink, GeneralSettings, SocialSettings, SectionSettings, TrackingSettings, HelplineSettings } from '@/hooks/useSiteSettings';
 import { toast } from 'sonner';
-import { Palette, Type, Settings, Share2, Layout, LayoutGrid, Upload, X, Code, Plus, Trash2, ArrowUp, ArrowDown, ExternalLink, Columns, Phone, MapPin, Mail } from 'lucide-react';
+import { Palette, Type, Settings, Share2, Layout, LayoutGrid, Upload, X, Code, Plus, Trash2, ArrowUp, ArrowDown, ExternalLink, Columns, Phone, MapPin, Mail, Headphones } from 'lucide-react';
 import { defaultFooterColumns } from '@/components/layout/Footer';
 import api from '@/lib/api';
 
-type SettingsValue = TypographySettings | ColorSettings | HeaderSettings | FooterSettings | GeneralSettings | SocialSettings | SectionSettings | TrackingSettings;
+type SettingsValue = TypographySettings | ColorSettings | HeaderSettings | FooterSettings | GeneralSettings | SocialSettings | SectionSettings | TrackingSettings | HelplineSettings;
 
 const SiteSettingsPage = () => {
   const { data: settings, isLoading } = useSiteSettings();
@@ -48,8 +48,9 @@ const SiteSettingsPage = () => {
           <p className="text-muted-foreground">Manage all website settings from here</p>
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-5 md:grid-cols-9 lg:w-auto lg:inline-flex gap-1">
             <TabsTrigger value="general"><Settings className="h-4 w-4" /><span className="hidden sm:inline ml-2">General</span></TabsTrigger>
+            <TabsTrigger value="helpline"><Headphones className="h-4 w-4 text-emerald-500" /><span className="hidden sm:inline ml-2 font-medium text-emerald-600 dark:text-emerald-400">Helpline</span></TabsTrigger>
             <TabsTrigger value="typography"><Type className="h-4 w-4" /><span className="hidden sm:inline ml-2">Typography</span></TabsTrigger>
             <TabsTrigger value="colors"><Palette className="h-4 w-4" /><span className="hidden sm:inline ml-2">Colors</span></TabsTrigger>
             <TabsTrigger value="sections"><LayoutGrid className="h-4 w-4" /><span className="hidden sm:inline ml-2">Sections</span></TabsTrigger>
@@ -62,6 +63,22 @@ const SiteSettingsPage = () => {
           <TabsContent value="general">
             <Card><CardHeader><CardTitle>General Settings</CardTitle><CardDescription>Change basic website information</CardDescription></CardHeader>
               <CardContent><GeneralSettingsForm settings={settings?.general} onSave={(value) => handleSave('general', value)} /></CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="helpline">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Headphones className="h-5 w-5 text-emerald-500" />
+                  হেল্পলাইন ও লাইভ চ্যাট সেটিংস (Floating Helpline & Chat)
+                </CardTitle>
+                <CardDescription>
+                  ওয়েবসাইটের ফ্লোটিং বাটনে WhatsApp, Facebook Messenger এবং সরাসরি ফোন কল বাটন কনফিগার করুন
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <HelplineSettingsForm settings={settings?.helpline} onSave={(value) => handleSave('helpline', value)} />
+              </CardContent>
             </Card>
           </TabsContent>
           <TabsContent value="typography">
@@ -759,6 +776,136 @@ const TrackingSettingsForm = ({ settings, onSave }: { settings?: TrackingSetting
         <div className="space-y-2"><Label>Custom Head Scripts</Label><Textarea value={form.customHeadScripts || ''} onChange={(e) => setForm({ ...form, customHeadScripts: e.target.value })} placeholder="<script>...</script>" rows={5} className="font-mono text-sm" /></div>
         <div className="space-y-2"><Label>Custom Body Scripts</Label><Textarea value={form.customBodyScripts || ''} onChange={(e) => setForm({ ...form, customBodyScripts: e.target.value })} placeholder="<noscript>...</noscript>" rows={5} className="font-mono text-sm" /></div>
       </div>
+      <Button type="submit">Save Changes</Button>
+    </form>
+  );
+};
+
+const HelplineSettingsForm = ({ settings, onSave }: { settings?: HelplineSettings; onSave: (value: HelplineSettings) => void }) => {
+  const [form, setForm] = useState<HelplineSettings>(settings || {
+    enabled: true,
+    whatsapp_number: '',
+    whatsapp_message: 'আসসালামু আলাইকুম, আমি UpShop BD থেকে কেনাকাটা করতে সাহায্য চাই।',
+    messenger_username: '',
+    phone_number: '',
+    position: 'bottom-right',
+    show_on_mobile: true,
+    show_on_desktop: true,
+  });
+
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); onSave(form); }} className="space-y-6">
+      <div className="flex items-center justify-between p-4 rounded-xl border bg-muted/20">
+        <div>
+          <Label className="font-semibold text-base">হেল্পলাইন উইজেট চালু রাখুন</Label>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            স্ক্রিনের কোণায় কাস্টমারদের জন্য ফ্লোটিং বাটন (WhatsApp / Messenger / Call) প্রদর্শিত হবে।
+          </p>
+        </div>
+        <Switch
+          checked={form.enabled !== false}
+          onCheckedChange={(val) => setForm({ ...form, enabled: val })}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5 font-medium">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+            WhatsApp নম্বর
+          </Label>
+          <Input
+            value={form.whatsapp_number || ''}
+            onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })}
+            placeholder="01712345678 বা 8801712345678"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            দেশের কোডসহ বা ছাড়া লিখুন (যেমন: 017xxxxxxxx বা 88017xxxxxxxx)
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5 font-medium">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+            Facebook Page / Messenger ইউজারনেম বা লিংক
+          </Label>
+          <Input
+            value={form.messenger_username || ''}
+            onChange={(e) => setForm({ ...form, messenger_username: e.target.value })}
+            placeholder="upshopbd বা https://m.me/upshopbd"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            আপনার ফেসবুক পেইজের ইউজারনেম লিখুন (যেমন: upshopbd)
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5 font-medium">
+            <Phone className="h-3.5 w-3.5 text-primary" />
+            সরাসরি হেল্পলাইন কল নম্বর (ঐচ্ছিক)
+          </Label>
+          <Input
+            value={form.phone_number || ''}
+            onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
+            placeholder="01712345678"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            কাস্টমার ক্লিক করলে সরাসরি আপনার নম্বরে কল ডায়াল হবে
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label>স্ক্রিনে বাটনের পজিশন</Label>
+          <Select
+            value={form.position || 'bottom-right'}
+            onValueChange={(v: 'bottom-right' | 'bottom-left') => setForm({ ...form, position: v })}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="bottom-right">ডান পাশে নিচে (Bottom Right - প্রস্তাবিত)</SelectItem>
+              <SelectItem value="bottom-left">বাম পাশে নিচে (Bottom Left)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>WhatsApp ডিফল্ট শুভেচ্ছা বার্তা</Label>
+        <Textarea
+          value={form.whatsapp_message || ''}
+          onChange={(e) => setForm({ ...form, whatsapp_message: e.target.value })}
+          placeholder="আসসালামু আলাইকুম, আমি UpShop BD থেকে কেনাকাটা করতে সাহায্য চাই।"
+          rows={2}
+        />
+        <p className="text-[11px] text-muted-foreground">
+          কাস্টমার WhatsApp বাটনে ক্লিক করলে এই মেসেজটি চ্যাটবক্সে স্বয়ংক্রিয়ভাবে তৈরি থাকবে।
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl border bg-muted/10">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="font-medium text-sm">মোবাইলে দেখান</Label>
+            <p className="text-[11px] text-muted-foreground">মোবাইল ভিজিটরদের হেল্পলাইন উইজেট দেখান</p>
+          </div>
+          <Switch
+            checked={form.show_on_mobile !== false}
+            onCheckedChange={(val) => setForm({ ...form, show_on_mobile: val })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="font-medium text-sm">ডেস্কটপে দেখান</Label>
+            <p className="text-[11px] text-muted-foreground">কম্পিউটার/ল্যাপটপ ভিজিটরদের হেল্পলাইন উইজেট দেখান</p>
+          </div>
+          <Switch
+            checked={form.show_on_desktop !== false}
+            onCheckedChange={(val) => setForm({ ...form, show_on_desktop: val })}
+          />
+        </div>
+      </div>
+
       <Button type="submit">Save Changes</Button>
     </form>
   );

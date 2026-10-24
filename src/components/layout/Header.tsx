@@ -221,8 +221,8 @@ const Header = () => {
                 {/* Hamburger Menu */}
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="flex-shrink-0">
-                      <MenuIcon className="h-5 w-5" />
+                    <Button variant="ghost" size="icon" className="flex-shrink-0 h-10 w-10 text-foreground hover:bg-muted/60">
+                      <MenuIcon className="h-6 w-6 stroke-[2.2]" />
                       <span className="sr-only">Menu</span>
                     </Button>
                   </SheetTrigger>
@@ -345,10 +345,10 @@ const Header = () => {
                 </Link>
 
                 {/* Right Cart Icon */}
-                <Link to="/cart" className="relative p-2 ml-auto">
-                  <CartIcon className="h-5 w-5" />
+                <Link to="/cart" className="relative flex items-center justify-center h-10 w-10 ml-auto text-foreground hover:text-primary transition-colors" aria-label="Shopping Cart">
+                  <CartIcon className="h-6 w-6 stroke-[2]" />
                   {totalItems > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-medium">
+                    <span className="absolute top-0.5 right-0.5 h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold shadow-xs">
                       {totalItems}
                     </span>
                   )}

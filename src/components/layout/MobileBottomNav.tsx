@@ -19,7 +19,7 @@ const MobileBottomNav = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/98 backdrop-blur-md border-t border-border/80 lg:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.06)] select-none">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-card border-t border-gray-200/90 dark:border-border lg:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.08)] select-none pb-[env(safe-area-inset-bottom)]">
       <div className="relative flex items-center justify-between h-16 px-2 max-w-md mx-auto">
         {/* 1. Shop (শপ) */}
         <Link
@@ -61,14 +61,14 @@ const MobileBottomNav = () => {
           >
             {/* Elevated circular button floating above the navbar */}
             <div
-              className={`absolute -top-5 w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border-[4px] border-background bg-primary text-primary-foreground transition-all duration-300 shadow-[0_8px_20px_-3px_rgba(var(--primary),0.5)] group-hover:scale-105 group-active:scale-95 ${
-                isActive('/') ? 'ring-2 ring-primary/40 ring-offset-2 ring-offset-background' : ''
+              className={`absolute -top-7 w-16 h-16 rounded-full flex items-center justify-center border-[4.5px] border-white dark:border-card bg-primary text-primary-foreground transition-all duration-300 shadow-[0_8px_24px_-4px_rgba(var(--primary),0.55)] group-hover:scale-105 group-active:scale-95 ${
+                isActive('/') ? 'ring-2 ring-primary/40 ring-offset-2 ring-offset-white dark:ring-offset-card' : ''
               }`}
             >
-              <Home className="h-6 w-6 text-white stroke-[2.3] drop-shadow-xs" />
+              <Home className="h-8 w-8 text-white stroke-[2.3] drop-shadow-xs" />
             </div>
             <span
-              className={`text-[11px] mt-6 tracking-tight transition-colors ${
+              className={`text-[11px] mt-7.5 tracking-tight transition-colors ${
                 isActive('/') ? 'text-primary font-bold' : 'text-muted-foreground font-medium'
               }`}
             >

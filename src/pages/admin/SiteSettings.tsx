@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSiteSettings, useUpdateSiteSettings, TypographySettings, ColorSettings, HeaderSettings, FooterSettings, FooterColumn, FooterLink, GeneralSettings, SocialSettings, SectionSettings, TrackingSettings, HelplineSettings, TelegramSettings } from '@/hooks/useSiteSettings';
+import { useSiteSettings, useUpdateSiteSettings, TypographySettings, ColorSettings, HeaderSettings, FooterSettings, FooterColumn, FooterLink, GeneralSettings, SocialSettings, SectionSettings, TrackingSettings, HelplineSettings, TelegramSettings, PaymentSettings } from '@/hooks/useSiteSettings';
 import { toast } from 'sonner';
-import { Palette, Type, Settings, Share2, Layout, LayoutGrid, Upload, X, Code, Plus, Trash2, ArrowUp, ArrowDown, ExternalLink, Columns, Phone, MapPin, Mail, Headphones, Send, Bot, Eye, EyeOff, CheckCircle2, MessageSquare, HelpCircle } from 'lucide-react';
+import { Palette, Type, Settings, Share2, Layout, LayoutGrid, Upload, X, Code, Plus, Trash2, ArrowUp, ArrowDown, ExternalLink, Columns, Phone, MapPin, Mail, Headphones, Send, Bot, Eye, EyeOff, CheckCircle2, MessageSquare, HelpCircle, CreditCard, Wallet, Copy, Check } from 'lucide-react';
 import { defaultFooterColumns } from '@/components/layout/Footer';
 import api from '@/lib/api';
 
-type SettingsValue = TypographySettings | ColorSettings | HeaderSettings | FooterSettings | GeneralSettings | SocialSettings | SectionSettings | TrackingSettings | HelplineSettings | TelegramSettings;
+type SettingsValue = TypographySettings | ColorSettings | HeaderSettings | FooterSettings | GeneralSettings | SocialSettings | SectionSettings | TrackingSettings | HelplineSettings | TelegramSettings | PaymentSettings;
 
 const SiteSettingsPage = () => {
   const { data: settings, isLoading } = useSiteSettings();
@@ -48,8 +48,9 @@ const SiteSettingsPage = () => {
           <p className="text-muted-foreground">Manage all website settings from here</p>
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-5 md:grid-cols-10 lg:w-auto lg:inline-flex gap-1">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-6 md:grid-cols-11 lg:w-auto lg:inline-flex gap-1">
             <TabsTrigger value="general"><Settings className="h-4 w-4" /><span className="hidden sm:inline ml-2">General</span></TabsTrigger>
+            <TabsTrigger value="payment"><CreditCard className="h-4 w-4 text-rose-500" /><span className="hidden sm:inline ml-2 font-medium text-rose-600 dark:text-rose-400">Payment</span></TabsTrigger>
             <TabsTrigger value="helpline"><Headphones className="h-4 w-4 text-emerald-500" /><span className="hidden sm:inline ml-2 font-medium text-emerald-600 dark:text-emerald-400">Helpline</span></TabsTrigger>
             <TabsTrigger value="telegram"><Send className="h-4 w-4 text-sky-500" /><span className="hidden sm:inline ml-2 font-medium text-sky-600 dark:text-sky-400">Telegram Bot</span></TabsTrigger>
             <TabsTrigger value="typography"><Type className="h-4 w-4" /><span className="hidden sm:inline ml-2">Typography</span></TabsTrigger>
@@ -64,6 +65,22 @@ const SiteSettingsPage = () => {
           <TabsContent value="general">
             <Card><CardHeader><CardTitle>General Settings</CardTitle><CardDescription>Change basic website information</CardDescription></CardHeader>
               <CardContent><GeneralSettingsForm settings={settings?.general} onSave={(value) => handleSave('general', value)} /></CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="payment">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-rose-500" />
+                  পেমেন্ট মেথড সেটিংস (Payment Methods Configuration)
+                </CardTitle>
+                <CardDescription>
+                  চেকআউট পেজে ক্যাশ অন ডেলিভারি (COD), বিকাশ (bKash), নগদ (Nagad) এবং রকেট (Rocket) পেমেন্ট অপশন কনফিগার করুন
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PaymentSettingsForm settings={settings?.payment} onSave={(value) => handleSave('payment', value)} />
+              </CardContent>
             </Card>
           </TabsContent>
           <TabsContent value="helpline">
@@ -1110,6 +1127,275 @@ const TelegramSettingsForm = ({
           </li>
         </ol>
       </div>
+    </form>
+  );
+};
+
+// Payment Methods Settings Form (COD, bKash, Nagad, Rocket)
+const PaymentSettingsForm = ({
+  settings,
+  onSave,
+}: {
+  settings?: PaymentSettings;
+  onSave: (value: PaymentSettings) => void;
+}) => {
+  const [form, setForm] = useState<PaymentSettings>({
+    cod: {
+      enabled: settings?.cod?.enabled !== false,
+      title: settings?.cod?.title || 'ক্যাশ অন ডেলিভারি (Cash on Delivery)',
+      instructions: settings?.cod?.instructions || 'পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন।',
+    },
+    bkash: {
+      enabled: settings?.bkash?.enabled || false,
+      number: settings?.bkash?.number || '',
+      accountType: settings?.bkash?.accountType || 'personal',
+      instructions: settings?.bkash?.instructions || 'আমাদের বিকাশ নম্বরে Send Money করুন এবং নিচের বক্সে আপনার বিকাশ নম্বর ও Transaction ID (TrxID) লিখুন।',
+    },
+    nagad: {
+      enabled: settings?.nagad?.enabled || false,
+      number: settings?.nagad?.number || '',
+      accountType: settings?.nagad?.accountType || 'personal',
+      instructions: settings?.nagad?.instructions || 'আমাদের নগদ নম্বরে Send Money করুন এবং নিচের বক্সে আপনার নগদ নম্বর ও Transaction ID (TrxID) লিখুন।',
+    },
+    rocket: {
+      enabled: settings?.rocket?.enabled || false,
+      number: settings?.rocket?.number || '',
+      accountType: settings?.rocket?.accountType || 'personal',
+      instructions: settings?.rocket?.instructions || 'আমাদের রকেট নম্বরে Send Money করুন এবং নিচের বক্সে আপনার রকেট নম্বর ও Transaction ID (TrxID) লিখুন।',
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(form);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* 1. Cash On Delivery */}
+      <div className="rounded-xl border p-5 bg-card shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50">
+              <Wallet className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-base">ক্যাশ অন ডেলিভারি (Cash on Delivery)</h3>
+              <p className="text-xs text-muted-foreground">কাস্টমার পার্সেল রিসিভ করার পর টাকা দেবে</p>
+            </div>
+          </div>
+          <Switch
+            checked={form.cod?.enabled !== false}
+            onCheckedChange={(val) => setForm({ ...form, cod: { ...form.cod, enabled: val } })}
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">মেথড টাইটেল</Label>
+            <Input
+              value={form.cod?.title || ''}
+              onChange={(e) => setForm({ ...form, cod: { ...form.cod, title: e.target.value, enabled: form.cod?.enabled !== false } })}
+              placeholder="ক্যাশ অন ডেলিভারি"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">নির্দেশনা বার্তা</Label>
+            <Input
+              value={form.cod?.instructions || ''}
+              onChange={(e) => setForm({ ...form, cod: { ...form.cod, instructions: e.target.value, enabled: form.cod?.enabled !== false } })}
+              placeholder="পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন।"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 2. bKash (বিকাশ) */}
+      <div className="rounded-xl border border-pink-200 dark:border-pink-900/50 p-5 bg-pink-50/20 dark:bg-pink-950/10 shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-pink-100 dark:border-pink-900/40">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-[#d12053] text-white flex items-center justify-center font-bold text-lg shadow-xs">
+              ব
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-base text-[#d12053]">বিকাশ (bKash Manual / Send Money)</h3>
+                {form.bkash?.enabled && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-100 text-[#d12053] font-bold">
+                    সক্রিয়
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">কাস্টমার আপনার বিকাশ নম্বরে টাকা পাঠিয়ে TrxID সাবমিট করবে</p>
+            </div>
+          </div>
+          <Switch
+            checked={form.bkash?.enabled || false}
+            onCheckedChange={(val) => setForm({ ...form, bkash: { ...form.bkash, enabled: val } })}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">দোকানের বিকাশ নম্বর <span className="text-destructive">*</span></Label>
+            <Input
+              value={form.bkash?.number || ''}
+              onChange={(e) => setForm({ ...form, bkash: { ...form.bkash, number: e.target.value, enabled: form.bkash?.enabled ?? true } })}
+              placeholder="01XXXXXXXXX"
+              className="font-mono text-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">অ্যাকাউন্ট টাইপ</Label>
+            <Select
+              value={form.bkash?.accountType || 'personal'}
+              onValueChange={(val: any) => setForm({ ...form, bkash: { ...form.bkash, accountType: val, enabled: form.bkash?.enabled ?? true } })}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="personal">Personal (ব্যক্তিগত - Send Money)</SelectItem>
+                <SelectItem value="merchant">Merchant (মার্চেন্ট - Payment)</SelectItem>
+                <SelectItem value="agent">Agent (এজেন্ট - Cash In)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium">কাস্টমারের জন্য নির্দেশনা</Label>
+          <Textarea
+            value={form.bkash?.instructions || ''}
+            onChange={(e) => setForm({ ...form, bkash: { ...form.bkash, instructions: e.target.value, enabled: form.bkash?.enabled ?? true } })}
+            placeholder="আমাদের বিকাশ নম্বরে Send Money করুন এবং নিচের বক্সে আপনার বিকাশ নম্বর ও Transaction ID (TrxID) লিখুন।"
+            rows={2}
+          />
+        </div>
+      </div>
+
+      {/* 3. Nagad (নগদ) */}
+      <div className="rounded-xl border border-orange-200 dark:border-orange-900/50 p-5 bg-orange-50/20 dark:bg-orange-950/10 shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-orange-100 dark:border-orange-900/40">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-[#f7941d] text-white flex items-center justify-center font-bold text-lg shadow-xs">
+              ন
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-base text-[#ea580c]">নগদ (Nagad Manual / Send Money)</h3>
+                {form.nagad?.enabled && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-100 text-[#ea580c] font-bold">
+                    সক্রিয়
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">কাস্টমার আপনার নগদ নম্বরে টাকা পাঠিয়ে TrxID সাবমিট করবে</p>
+            </div>
+          </div>
+          <Switch
+            checked={form.nagad?.enabled || false}
+            onCheckedChange={(val) => setForm({ ...form, nagad: { ...form.nagad, enabled: val } })}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">দোকানের নগদ নম্বর <span className="text-destructive">*</span></Label>
+            <Input
+              value={form.nagad?.number || ''}
+              onChange={(e) => setForm({ ...form, nagad: { ...form.nagad, number: e.target.value, enabled: form.nagad?.enabled ?? true } })}
+              placeholder="01XXXXXXXXX"
+              className="font-mono text-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">অ্যাকাউন্ট টাইপ</Label>
+            <Select
+              value={form.nagad?.accountType || 'personal'}
+              onValueChange={(val: any) => setForm({ ...form, nagad: { ...form.nagad, accountType: val, enabled: form.nagad?.enabled ?? true } })}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="personal">Personal (ব্যক্তিগত - Send Money)</SelectItem>
+                <SelectItem value="merchant">Merchant (মার্চেন্ট - Payment)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium">কাস্টমারের জন্য নির্দেশনা</Label>
+          <Textarea
+            value={form.nagad?.instructions || ''}
+            onChange={(e) => setForm({ ...form, nagad: { ...form.nagad, instructions: e.target.value, enabled: form.nagad?.enabled ?? true } })}
+            placeholder="আমাদের নগদ নম্বরে Send Money করুন এবং নিচের বক্সে আপনার নগদ নম্বর ও Transaction ID (TrxID) লিখুন।"
+            rows={2}
+          />
+        </div>
+      </div>
+
+      {/* 4. Rocket (রকেট) */}
+      <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 p-5 bg-purple-50/20 dark:bg-purple-950/10 shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-purple-100 dark:border-purple-900/40">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-[#8c3494] text-white flex items-center justify-center font-bold text-lg shadow-xs">
+              র
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-base text-[#8c3494]">রকেট (Rocket Manual / Send Money)</h3>
+                {form.rocket?.enabled && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-[#8c3494] font-bold">
+                    সক্রিয়
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">কাস্টমার আপনার রকেট নম্বরে টাকা পাঠিয়ে TrxID সাবমিট করবে</p>
+            </div>
+          </div>
+          <Switch
+            checked={form.rocket?.enabled || false}
+            onCheckedChange={(val) => setForm({ ...form, rocket: { ...form.rocket, enabled: val } })}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">দোকানের রকেট নম্বর (১২ ডিজিট) <span className="text-destructive">*</span></Label>
+            <Input
+              value={form.rocket?.number || ''}
+              onChange={(e) => setForm({ ...form, rocket: { ...form.rocket, number: e.target.value, enabled: form.rocket?.enabled ?? true } })}
+              placeholder="01XXXXXXXXX-X"
+              className="font-mono text-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">অ্যাকাউন্ট টাইপ</Label>
+            <Select
+              value={form.rocket?.accountType || 'personal'}
+              onValueChange={(val: any) => setForm({ ...form, rocket: { ...form.rocket, accountType: val, enabled: form.rocket?.enabled ?? true } })}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="personal">Personal (ব্যক্তিগত - Send Money)</SelectItem>
+                <SelectItem value="merchant">Merchant (মার্চেন্ট - Payment)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium">কাস্টমারের জন্য নির্দেশনা</Label>
+          <Textarea
+            value={form.rocket?.instructions || ''}
+            onChange={(e) => setForm({ ...form, rocket: { ...form.rocket, instructions: e.target.value, enabled: form.rocket?.enabled ?? true } })}
+            placeholder="আমাদের রকেট নম্বরে Send Money করুন এবং নিচের বক্সে আপনার রকেট নম্বর ও Transaction ID (TrxID) লিখুন।"
+            rows={2}
+          />
+        </div>
+      </div>
+
+      <Button type="submit" className="px-7">
+        পেমেন্ট সেটিংস সেভ করুন (Save Payment Settings)
+      </Button>
     </form>
   );
 };

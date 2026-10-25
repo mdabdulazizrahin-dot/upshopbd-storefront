@@ -10,8 +10,9 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDistricts, useUpazilas, useDeliverySettings, getDeliveryCharge } from '@/hooks/useLocation';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { toast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Trash2, ChevronRight, ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, Loader2, Trash2, ChevronRight, ChevronLeft, CheckCircle2, Wallet, Copy, Check } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import api from '@/lib/api';
 
@@ -38,6 +39,13 @@ const Checkout = () => {
   const [botTrapField, setBotTrapField] = useState('');
   const { data: upazilas, isLoading: upazilasLoading } = useUpazilas(formData.district);
   const isInsideDhaka = formData.deliveryType === 'inside_dhaka';
+
+  const { data: siteSettings } = useSiteSettings();
+  const paymentConfig = siteSettings?.payment;
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'bkash' | 'nagad' | 'rocket'>('cod');
+  const [senderNumber, setSenderNumber] = useState('');
+  const [transactionId, setTransactionId] = useState('');
+  const [copiedNumber, setCopiedNumber] = useState(false);
   const deliveryCharge = useMemo(() => getDeliveryCharge(deliverySettings, isInsideDhaka), [deliverySettings, isInsideDhaka]);
   const total = subtotal + deliveryCharge;
 
@@ -127,6 +135,17 @@ const Checkout = () => {
       toast({ title: 'ভুল মোবাইল নম্বর', description: 'বাংলাদেশের সঠিক মোবাইল নম্বর দিন। যেমন: 01XXXXXXXXX', variant: 'destructive' });
       return;
     }
+    if (paymentMethod !== 'cod') {
+      if (!senderNumber.trim() || !transactionId.trim()) {
+        const name = paymentMethod === 'bkash' ? 'বিকাশ' : paymentMethod === 'nagad' ? 'নগদ' : 'রকেট';
+        toast({
+          title: 'পেমেন্ট তথ্য দিন',
+          description: `অনুগ্রহ করে আপনার ${name} প্রেরক নম্বর এবং Transaction ID (TrxID) লিখুন।`,
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
     setIsSubmitting(true);
     try {
       const selectedDistrict = districts?.find(d => d.id === formData.district);
@@ -154,8 +173,10 @@ const Checkout = () => {
         delivery_charge: deliveryCharge,
         subtotal: subtotal,
         total_amount: total,
-        payment_method: 'cod',
-        payment_status: 'pending',
+        payment_method: paymentMethod,
+        sender_number: paymentMethod !== 'cod' ? senderNumber.trim() : null,
+        transaction_id: paymentMethod !== 'cod' ? transactionId.trim() : null,
+        payment_status: paymentMethod === 'cod' ? 'pending' : 'verification_pending',
         order_status: 'pending',
         user_id: user?.id || null,
         bot_trap_field: botTrapField,
@@ -329,8 +350,191 @@ const Checkout = () => {
                     <span className="font-bold text-primary text-lg">{formData.district ? total.toLocaleString() : subtotal.toLocaleString()}</span>
                   </div>
                 </div>
-                <div className="pt-2">
-                  <span className="inline-block px-4 py-2 border rounded text-sm font-medium bg-muted/50">ক্যাশ অন ডেলিভারি</span>
+
+                {/* Payment Methods Selection */}
+                <div className="pt-2 space-y-3">
+                  <label className="block text-sm font-semibold text-foreground">
+                    পেমেন্ট মেথড নির্বাচন করুন:
+                  </label>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {/* Cash on Delivery */}
+                    {paymentConfig?.cod?.enabled !== false && (
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('cod')}
+                        className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
+                          paymentMethod === 'cod'
+                            ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs'
+                            : 'border-border hover:border-muted-foreground/30 bg-card'
+                        }`}
+                      >
+                        <div className={`p-2 rounded-md ${paymentMethod === 'cod' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
+                          <Wallet className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold leading-tight">ক্যাশ অন ডেলিভারি</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">পণ্য পেয়ে মূল্য দিন</p>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* bKash */}
+                    {paymentConfig?.bkash?.enabled && (
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('bkash')}
+                        className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
+                          paymentMethod === 'bkash'
+                            ? 'border-[#d12053] bg-pink-50/50 dark:bg-pink-950/20 ring-2 ring-[#d12053]/30 shadow-xs'
+                            : 'border-border hover:border-pink-300 bg-card'
+                        }`}
+                      >
+                        <div className="h-8 w-8 rounded-md bg-[#d12053] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                          ব
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[#d12053] leading-tight">বিকাশ (bKash)</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {paymentConfig.bkash.accountType === 'merchant' ? 'মার্চেন্ট পেমেন্ট' : 'Send Money'}
+                          </p>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Nagad */}
+                    {paymentConfig?.nagad?.enabled && (
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('nagad')}
+                        className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
+                          paymentMethod === 'nagad'
+                            ? 'border-[#f7941d] bg-orange-50/50 dark:bg-orange-950/20 ring-2 ring-[#f7941d]/30 shadow-xs'
+                            : 'border-border hover:border-orange-300 bg-card'
+                        }`}
+                      >
+                        <div className="h-8 w-8 rounded-md bg-[#f7941d] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                          ন
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[#ea580c] leading-tight">নগদ (Nagad)</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {paymentConfig.nagad.accountType === 'merchant' ? 'মার্চেন্ট পেমেন্ট' : 'Send Money'}
+                          </p>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Rocket */}
+                    {paymentConfig?.rocket?.enabled && (
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('rocket')}
+                        className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
+                          paymentMethod === 'rocket'
+                            ? 'border-[#8c3494] bg-purple-50/50 dark:bg-purple-950/20 ring-2 ring-[#8c3494]/30 shadow-xs'
+                            : 'border-border hover:border-purple-300 bg-card'
+                        }`}
+                      >
+                        <div className="h-8 w-8 rounded-md bg-[#8c3494] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                          র
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[#8c3494] leading-tight">রকেট (Rocket)</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {paymentConfig.rocket.accountType === 'merchant' ? 'মার্চেন্ট পেমেন্ট' : 'Send Money'}
+                          </p>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Instructions & Inputs for bKash / Nagad / Rocket */}
+                  {paymentMethod !== 'cod' && (
+                    <div className={`p-4 rounded-xl border mt-3 space-y-3.5 transition-all animate-in fade-in-50 ${
+                      paymentMethod === 'bkash'
+                        ? 'border-pink-200 dark:border-pink-900 bg-pink-50/40 dark:bg-pink-950/20'
+                        : paymentMethod === 'nagad'
+                        ? 'border-orange-200 dark:border-orange-900 bg-orange-50/40 dark:bg-orange-950/20'
+                        : 'border-purple-200 dark:border-purple-900 bg-purple-50/40 dark:bg-purple-950/20'
+                    }`}>
+                      {(() => {
+                        const activeConfig = paymentConfig?.[paymentMethod];
+                        const storeNumber = activeConfig?.number;
+                        const accountType = activeConfig?.accountType || 'personal';
+                        const methodTitle = paymentMethod === 'bkash' ? 'বিকাশ' : paymentMethod === 'nagad' ? 'নগদ' : 'রকেট';
+
+                        return (
+                          <>
+                            <div className="flex items-center justify-between p-2.5 rounded-lg bg-background border shadow-2xs">
+                              <div>
+                                <p className="text-[11px] text-muted-foreground">
+                                  আমাদের {methodTitle} ({accountType === 'merchant' ? 'মার্চেন্ট পেমেন্ট' : 'Personal Send Money'}) নম্বর:
+                                </p>
+                                <p className="font-mono font-bold text-sm sm:text-base text-foreground mt-0.5">
+                                  {storeNumber || '01XXXXXXXXX'}
+                                </p>
+                              </div>
+                              {storeNumber && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(storeNumber);
+                                    setCopiedNumber(true);
+                                    setTimeout(() => setCopiedNumber(false), 2000);
+                                  }}
+                                  className="px-2.5 py-1.5 rounded-md text-xs font-medium border bg-muted/60 hover:bg-muted flex items-center gap-1 transition-colors"
+                                >
+                                  {copiedNumber ? (
+                                    <>
+                                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                                      <span className="text-emerald-600 font-semibold">কপি হয়েছে!</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy className="h-3.5 w-3.5" />
+                                      <span>কপি করুন</span>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              {activeConfig?.instructions || `আমাদের ${methodTitle} নম্বরে মোট ${formData.district ? total.toLocaleString() : subtotal.toLocaleString()}৳ পাঠান এবং নিচে তথ্য দিন:`}
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                              <div className="space-y-1">
+                                <label className="text-xs font-medium text-foreground">
+                                  আপনার {methodTitle} নম্বর <span className="text-destructive">*</span>
+                                </label>
+                                <Input
+                                  value={senderNumber}
+                                  onChange={(e) => setSenderNumber(e.target.value)}
+                                  placeholder="01XXXXXXXXX"
+                                  className="h-10 text-xs font-mono bg-background"
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs font-medium text-foreground">
+                                  ট্রানজেকশন আইডি (TrxID) <span className="text-destructive">*</span>
+                                </label>
+                                <Input
+                                  value={transactionId}
+                                  onChange={(e) => setTransactionId(e.target.value)}
+                                  placeholder="যেমন: 9J3K8L2P"
+                                  className="h-10 text-xs font-mono uppercase bg-background"
+                                  required
+                                />
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
                 <Button onClick={handleSubmit} className="w-full h-12 text-base font-semibold mt-4" size="lg" disabled={isSubmitting}>
                   {isSubmitting ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />প্রক্রিয়াকরণ হচ্ছে...</> : 'অর্ডার কনফার্ম করুন »'}

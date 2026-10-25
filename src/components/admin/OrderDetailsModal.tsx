@@ -32,6 +32,9 @@ interface Order {
   order_note?: string;
   order_status: string;
   payment_status: string;
+  payment_method?: string;
+  transaction_id?: string;
+  sender_number?: string;
   delivery_type?: string;
   delivery_charge: number;
   subtotal: number;
@@ -327,6 +330,39 @@ const OrderDetailsModal = ({ order, open, onOpenChange }: OrderDetailsModalProps
                       </Select>
                     ) : (
                       <Badge variant={order.payment_status === 'paid' ? 'default' : 'secondary'}>{order.payment_status}</Badge>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground flex items-center gap-1">
+                      <CreditCard className="h-3.5 w-3.5" /> পেমেন্ট মেথড ও TrxID
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <Badge className={
+                        order.payment_method === 'bkash' ? 'bg-[#d12053] text-white hover:bg-[#d12053]/90' :
+                        order.payment_method === 'nagad' ? 'bg-[#ea580c] text-white hover:bg-[#ea580c]/90' :
+                        order.payment_method === 'rocket' ? 'bg-[#8c3494] text-white hover:bg-[#8c3494]/90' :
+                        'bg-slate-700 text-white'
+                      }>
+                        {order.payment_method === 'bkash' ? 'bKash (বিকাশ)' :
+                         order.payment_method === 'nagad' ? 'Nagad (নগদ)' :
+                         order.payment_method === 'rocket' ? 'Rocket (রকেট)' :
+                         'Cash on Delivery'}
+                      </Badge>
+                      {order.payment_status === 'verification_pending' && (
+                        <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-950/30">
+                          যাচাই প্রয়োজন (Verify TrxID)
+                        </Badge>
+                      )}
+                    </div>
+                    {(order.transaction_id || order.sender_number) && (
+                      <div className="p-2.5 rounded-lg bg-muted/60 border text-xs space-y-1 font-mono mt-1.5">
+                        {order.sender_number && (
+                          <p><span className="text-muted-foreground">প্রেরক নম্বর:</span> <strong className="text-foreground">{order.sender_number}</strong></p>
+                        )}
+                        {order.transaction_id && (
+                          <p><span className="text-muted-foreground">TrxID:</span> <strong className="text-primary font-bold">{order.transaction_id}</strong></p>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div>

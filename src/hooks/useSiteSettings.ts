@@ -112,6 +112,24 @@ export interface TelegramSettings {
   chatId?: string;
 }
 
+export interface PaymentMethodItem {
+  enabled: boolean;
+  number?: string;
+  accountType?: 'personal' | 'merchant' | 'agent';
+  instructions?: string;
+}
+
+export interface PaymentSettings {
+  cod?: {
+    enabled: boolean;
+    title?: string;
+    instructions?: string;
+  };
+  bkash?: PaymentMethodItem;
+  nagad?: PaymentMethodItem;
+  rocket?: PaymentMethodItem;
+}
+
 export interface SiteSettings {
   general?: GeneralSettings;
   colors?: ColorSettings;
@@ -123,6 +141,7 @@ export interface SiteSettings {
   tracking?: TrackingSettings;
   helpline?: HelplineSettings;
   telegram?: TelegramSettings;
+  payment?: PaymentSettings;
 }
 
 export const defaultSettings: SiteSettings = {
@@ -155,6 +174,31 @@ export const defaultSettings: SiteSettings = {
     isEnabled: false,
     botToken: '',
     chatId: '',
+  },
+  payment: {
+    cod: {
+      enabled: true,
+      title: 'ক্যাশ অন ডেলিভারি (Cash on Delivery)',
+      instructions: 'পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন।',
+    },
+    bkash: {
+      enabled: true,
+      number: '',
+      accountType: 'personal',
+      instructions: 'আমাদের বিকাশ নম্বরে Send Money করুন। সফল পেমেন্টের পর নিচে আপনার প্রেরক নম্বর ও TrxID লিখুন।',
+    },
+    nagad: {
+      enabled: true,
+      number: '',
+      accountType: 'personal',
+      instructions: 'আমাদের নগদ নম্বরে Send Money করুন। সফল পেমেন্টের পর নিচে আপনার প্রেরক নম্বর ও TrxID লিখুন।',
+    },
+    rocket: {
+      enabled: false,
+      number: '',
+      accountType: 'personal',
+      instructions: 'আমাদের রকেট নম্বরে Send Money করুন। সফল পেমেন্টের পর নিচে আপনার প্রেরক নম্বর ও TrxID লিখুন।',
+    },
   },
 };
 

@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSiteSettings, useUpdateSiteSettings, TypographySettings, ColorSettings, HeaderSettings, FooterSettings, FooterColumn, FooterLink, GeneralSettings, SocialSettings, SectionSettings, TrackingSettings, HelplineSettings } from '@/hooks/useSiteSettings';
+import { useSiteSettings, useUpdateSiteSettings, TypographySettings, ColorSettings, HeaderSettings, FooterSettings, FooterColumn, FooterLink, GeneralSettings, SocialSettings, SectionSettings, TrackingSettings, HelplineSettings, TelegramSettings } from '@/hooks/useSiteSettings';
 import { toast } from 'sonner';
-import { Palette, Type, Settings, Share2, Layout, LayoutGrid, Upload, X, Code, Plus, Trash2, ArrowUp, ArrowDown, ExternalLink, Columns, Phone, MapPin, Mail, Headphones } from 'lucide-react';
+import { Palette, Type, Settings, Share2, Layout, LayoutGrid, Upload, X, Code, Plus, Trash2, ArrowUp, ArrowDown, ExternalLink, Columns, Phone, MapPin, Mail, Headphones, Send, Bot, Eye, EyeOff, CheckCircle2, MessageSquare, HelpCircle } from 'lucide-react';
 import { defaultFooterColumns } from '@/components/layout/Footer';
 import api from '@/lib/api';
 
-type SettingsValue = TypographySettings | ColorSettings | HeaderSettings | FooterSettings | GeneralSettings | SocialSettings | SectionSettings | TrackingSettings | HelplineSettings;
+type SettingsValue = TypographySettings | ColorSettings | HeaderSettings | FooterSettings | GeneralSettings | SocialSettings | SectionSettings | TrackingSettings | HelplineSettings | TelegramSettings;
 
 const SiteSettingsPage = () => {
   const { data: settings, isLoading } = useSiteSettings();
@@ -48,9 +48,10 @@ const SiteSettingsPage = () => {
           <p className="text-muted-foreground">Manage all website settings from here</p>
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-5 md:grid-cols-9 lg:w-auto lg:inline-flex gap-1">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-5 md:grid-cols-10 lg:w-auto lg:inline-flex gap-1">
             <TabsTrigger value="general"><Settings className="h-4 w-4" /><span className="hidden sm:inline ml-2">General</span></TabsTrigger>
             <TabsTrigger value="helpline"><Headphones className="h-4 w-4 text-emerald-500" /><span className="hidden sm:inline ml-2 font-medium text-emerald-600 dark:text-emerald-400">Helpline</span></TabsTrigger>
+            <TabsTrigger value="telegram"><Send className="h-4 w-4 text-sky-500" /><span className="hidden sm:inline ml-2 font-medium text-sky-600 dark:text-sky-400">Telegram Bot</span></TabsTrigger>
             <TabsTrigger value="typography"><Type className="h-4 w-4" /><span className="hidden sm:inline ml-2">Typography</span></TabsTrigger>
             <TabsTrigger value="colors"><Palette className="h-4 w-4" /><span className="hidden sm:inline ml-2">Colors</span></TabsTrigger>
             <TabsTrigger value="sections"><LayoutGrid className="h-4 w-4" /><span className="hidden sm:inline ml-2">Sections</span></TabsTrigger>
@@ -78,6 +79,22 @@ const SiteSettingsPage = () => {
               </CardHeader>
               <CardContent>
                 <HelplineSettingsForm settings={settings?.helpline} onSave={(value) => handleSave('helpline', value)} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="telegram">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Send className="h-5 w-5 text-sky-500" />
+                  টেলিগ্রাম বট অর্ডার নোটিফিকেশন (Telegram Bot Order Notification)
+                </CardTitle>
+                <CardDescription>
+                  নতুন কোনো অর্ডার আসার সাথে সাথে তাৎক্ষণিক আপনার টেলিগ্রাম অ্যাকাউন্টে বা টিমের গ্রুপে বিস্তারিত মেসেজ পাওয়ার জন্য কনফিগার করুন
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TelegramSettingsForm settings={settings?.telegram} onSave={(value) => handleSave('telegram', value)} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -907,6 +924,192 @@ const HelplineSettingsForm = ({ settings, onSave }: { settings?: HelplineSetting
       </div>
 
       <Button type="submit">Save Changes</Button>
+    </form>
+  );
+};
+
+// Telegram Bot Settings Form
+const TelegramSettingsForm = ({
+  settings,
+  onSave,
+}: {
+  settings?: TelegramSettings;
+  onSave: (value: TelegramSettings) => void;
+}) => {
+  const [form, setForm] = useState<TelegramSettings>({
+    isEnabled: settings?.isEnabled || false,
+    botToken: settings?.botToken || '',
+    chatId: settings?.chatId || '',
+  });
+  const [showToken, setShowToken] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+
+  const handleTest = async () => {
+    if (!form.botToken?.trim() || !form.chatId?.trim()) {
+      toast.error('দয়া করে প্রথমে Bot Token এবং Chat ID ইনপুট বক্সে লিখুন।');
+      return;
+    }
+    setIsTesting(true);
+    try {
+      const res: any = await api.post('/site-settings/test-telegram', {
+        bot_token: form.botToken.trim(),
+        chat_id: form.chatId.trim(),
+      });
+      toast.success(res?.message || 'সফলভাবে টেলিগ্রাম টেস্ট নোটিফিকেশন পাঠানো হয়েছে! টেলিগ্রাম চেক করুন।');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'টেলিগ্রাম টেস্ট মেসেজ পাঠানো যায়নি';
+      toast.error(msg);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(form);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Top Status Card */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-card shadow-xs gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 border border-sky-200/50">
+            <Send className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <Label className="font-semibold text-base">টেলিগ্রাম অর্ডার নোটিফিকেশন</Label>
+              {form.isEnabled ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400">
+                  <CheckCircle2 className="h-3 w-3 mr-1" /> সক্রিয় (Active)
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                  নিষ্ক্রিয় (Disabled)
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              চালু থাকলে যেকোনো নতুন অর্ডার আসার সাথে সাথে তাৎক্ষণিক টেলিগ্রামে বিস্তারিত নোটিফিকেশন পাঠানো হবে
+            </p>
+          </div>
+        </div>
+        <Switch
+          checked={form.isEnabled || false}
+          onCheckedChange={(val) => setForm({ ...form, isEnabled: val })}
+        />
+      </div>
+
+      {/* Configuration Inputs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Bot Token */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="font-medium text-sm flex items-center gap-1.5">
+              <Bot className="h-4 w-4 text-sky-500" />
+              টেলিগ্রাম বট টোকেন (Bot Token) <span className="text-destructive">*</span>
+            </Label>
+          </div>
+          <div className="relative">
+            <Input
+              type={showToken ? 'text' : 'password'}
+              value={form.botToken || ''}
+              onChange={(e) => setForm({ ...form, botToken: e.target.value })}
+              placeholder="যেমন: 7123456789:AAHkYqX12345abcdef..."
+              className="pr-10 font-mono text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => setShowToken(!showToken)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+            >
+              {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Telegram-এর <code className="text-sky-600 dark:text-sky-400 font-semibold">@BotFather</code> থেকে পাওয়া বটের গোপন API টোকেন
+          </p>
+        </div>
+
+        {/* Chat ID */}
+        <div className="space-y-2">
+          <Label className="font-medium text-sm flex items-center gap-1.5">
+            <MessageSquare className="h-4 w-4 text-sky-500" />
+            টেলিগ্রাম চ্যাট আইডি বা গ্রুপ আইডি (Chat ID) <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            type="text"
+            value={form.chatId || ''}
+            onChange={(e) => setForm({ ...form, chatId: e.target.value })}
+            placeholder="ব্যক্তিগত: 123456789 বা গ্রুপ: -100123456789"
+            className="font-mono text-sm"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            আপনার ব্যক্তিগত আইডি অথবা অ্যাডমিন গ্রুপের আইডি (<code className="text-sky-600 dark:text-sky-400 font-semibold">@userinfobot</code> দিয়ে বের করতে পারেন)
+          </p>
+        </div>
+      </div>
+
+      {/* Buttons */}
+      <div className="flex flex-wrap items-center gap-3 pt-2">
+        <Button type="submit" className="px-6">
+          সেভ করুন (Save Settings)
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleTest}
+          disabled={isTesting}
+          className="border-sky-300 hover:bg-sky-50 hover:text-sky-700 dark:border-sky-800 dark:hover:bg-sky-950/40 text-sky-600 dark:text-sky-400"
+        >
+          {isTesting ? (
+            <span className="flex items-center gap-2">
+              <span className="animate-spin rounded-full h-4 w-4 border-2 border-sky-500 border-t-transparent" />
+              টেস্ট পাঠানো হচ্ছে...
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5">
+              <Send className="h-4 w-4" />
+              টেস্ট মেসেজ পাঠান (Send Test Notification)
+            </span>
+          )}
+        </Button>
+      </div>
+
+      {/* Step by Step Guide Card */}
+      <div className="rounded-xl border border-sky-100 dark:border-sky-950 bg-sky-50/50 dark:bg-sky-950/20 p-5 space-y-4">
+        <div className="flex items-center gap-2 text-sky-700 dark:text-sky-300 font-semibold text-sm">
+          <HelpCircle className="h-5 w-5 flex-shrink-0" />
+          কীভাবে ১ মিনিটে টেলিগ্রাম বট সেটআপ করবেন? (সহজ গাইড)
+        </div>
+        <ol className="list-decimal list-inside space-y-2 text-xs text-muted-foreground leading-relaxed">
+          <li>
+            আপনার ফোনে বা কম্পিউটারে <strong>Telegram</strong> অ্যাপ খুলুন এবং সার্চ বারে <code className="bg-sky-100 dark:bg-sky-900/60 px-1.5 py-0.5 rounded text-sky-800 dark:text-sky-200 font-mono font-bold">@BotFather</code> লিখে চ্যাটে প্রবেশ করে <strong>Start</strong> চাপুন।
+          </li>
+          <li>
+            মেসেজে লিখুন <strong>/newbot</strong> এবং সেন্ড করুন। এরপর আপনার বটের একটি নাম দিন (যেমন: <i>UpShop BD Notifier</i>)।
+          </li>
+          <li>
+            এবার বটের একটি অনন্য ইউজারনেম দিন যার শেষে <code>bot</code> থাকতে হবে (যেমন: <i>upshopbd_order_bot</i>)।
+          </li>
+          <li>
+            BotFather সাথে সাথে আপনাকে একটি <strong>HTTP API Token</strong> দেবে (যেমন: <code>7123456789:AAHkYqX...</code>)। সেটি কপি করে উপরের <strong>Bot Token</strong> বক্সে পেস্ট করুন।
+          </li>
+          <li>
+            তৈরি করা বটের লিংকে ক্লিক করে বটে প্রবেশ করুন এবং অবশ্যই একবার <strong>Start</strong> বাটনে চাপ দিন (বট চালু করার জন্য এটি বাধ্যতামূলক)।
+          </li>
+          <li>
+            নিজের <strong>Chat ID</strong> বের করতে টেলিগ্রামে <code className="bg-sky-100 dark:bg-sky-900/60 px-1.5 py-0.5 rounded text-sky-800 dark:text-sky-200 font-mono font-bold">@userinfobot</code> সার্চ করে Start চাপুন। বটটি আপনাকে আপনার <strong>Id</strong> নম্বর দেবে (যেমন: <code>123456789</code>)। সেটি কপি করে উপরের <strong>Chat ID</strong> বক্সে বসান।
+          </li>
+          <li>
+            (ঐচ্ছিক: গ্রুপে নোটিফিকেশন পেতে চাইলে একটি টেলিগ্রাম গ্রুপ খুলে আপনার বটটিকে অ্যাডমিন হিসেবে অ্যাড করুন এবং গ্রুপের আইডি দিন)।
+          </li>
+          <li>
+            সবশেষে <strong>"টেস্ট মেসেজ পাঠান"</strong> বাটনে ক্লিক করে চেক করুন এবং <strong>"Save Settings"</strong> বাটনে ক্লিক করুন!
+          </li>
+        </ol>
+      </div>
     </form>
   );
 };

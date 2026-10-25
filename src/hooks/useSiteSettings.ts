@@ -106,6 +106,12 @@ export interface HelplineSettings {
   show_on_desktop?: boolean;
 }
 
+export interface TelegramSettings {
+  isEnabled?: boolean;
+  botToken?: string;
+  chatId?: string;
+}
+
 export interface SiteSettings {
   general?: GeneralSettings;
   colors?: ColorSettings;
@@ -116,6 +122,7 @@ export interface SiteSettings {
   sections?: SectionSettings;
   tracking?: TrackingSettings;
   helpline?: HelplineSettings;
+  telegram?: TelegramSettings;
 }
 
 export const defaultSettings: SiteSettings = {
@@ -143,6 +150,11 @@ export const defaultSettings: SiteSettings = {
     position: 'bottom-right',
     show_on_mobile: true,
     show_on_desktop: true,
+  },
+  telegram: {
+    isEnabled: false,
+    botToken: '',
+    chatId: '',
   },
 };
 
